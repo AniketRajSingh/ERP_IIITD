@@ -88,6 +88,15 @@ export const getProjects = async () => {
     return await apiRequest('/projects/');
 };
 
+export const getEmployees = async (): Promise<{id: string, name: string}[]> => {
+    return [
+        { id: "prof1", name: "Dr. Smith (CSE)" },
+        { id: "prof2", name: "Dr. Jones (ECE)" },
+        { id: "prof3", name: "Dr. Patel (Design)" },
+        { id: "dean.acad", name: "Dean of Academics" }
+    ];
+};
+
 export const submitProfileChangeRequest = async (changes: any) => {
     return await apiRequest('/core/profile-requests/', {
         method: 'POST',

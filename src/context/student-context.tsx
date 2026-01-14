@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { getStudentProfile } from "@/lib/mock-data";
 import { Student } from "@/lib/types";
+import { isLoggedIn } from "@/lib/api";
 
 interface StudentContextType {
   student: Student | null;
@@ -17,6 +18,10 @@ export function StudentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function loadStudent() {
+      if (!isLoggedIn()) {
+        setIsLoading(false);
+        return;
+      }
       try {
         const studentData = await getStudentProfile();
         setStudent(studentData);

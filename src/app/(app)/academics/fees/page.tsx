@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardHeader,
@@ -16,10 +20,44 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getFeeDetails } from "@/lib/mock-data";
-import { IndianRupee, AlertCircle } from "lucide-react";
+import { isLoggedIn } from "@/lib/api";
+import { IndianRupee, AlertCircle, Loader2 } from "lucide-react";
+import { FeePayment, FeeDue } from "@/lib/types";
 
-export default async function FeesPage() {
-  const { paymentHistory, pendingDues } = await getFeeDetails();
+export default function FeesPage() {
+  const [paymentHistory, setPaymentHistory] = useState<FeePayment[]>([]);
+  const [pendingDues, setPendingDues] = useState<FeeDue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn()) {
+      router.push("/login");
+      return;
+    }
+
+    async function loadFees() {
+      try {
+        const { paymentHistory, pendingDues } = await getFeeDetails();
+        setPaymentHistory(paymentHistory);
+        setPendingDues(pendingDues);
+      } catch (error) {
+        console.error("Failed to fetch fee details:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFees();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const totalDues = pendingDues.reduce((sum, due) => sum + due.amount, 0);
 
@@ -54,7 +92,7 @@ export default async function FeesPage() {
                 {pendingDues.map((due) => (
                     <div key={due.id} className="flex justify-between items-center text-sm">
                         <p>{due.description}</p>
-                        <p className="font-medium">₹{due.amount.toLocaleString("en-IN")}</p>
+                        <p className="font-medium">₹{Number(due.amount).toLocaleString("en-IN")}</p>
                     </div>
                 ))}
             </div>
@@ -81,30 +119,38 @@ export default async function FeesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paymentHistory.map((payment) => (
-                <TableRow key={payment.transactionId}>
-                  <TableCell className="font-mono text-xs">
-                    {payment.transactionId}
-                  </TableCell>
-                  <TableCell>{payment.date}</TableCell>
-                  <TableCell>{payment.description}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    ₹{payment.amount.toLocaleString("en-IN")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Badge
-                      variant={
-                        payment.status === "Successful"
-                          ? "default"
-                          : "destructive"
-                      }
-                      className="capitalize"
-                    >
-                      {payment.status}
-                    </Badge>
+              {paymentHistory.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No payment history found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paymentHistory.map((payment) => (
+                  <TableRow key={payment.transactionId}>
+                    <TableCell className="font-mono text-xs">
+                      {payment.transactionId}
+                    </TableCell>
+                    <TableCell>{new Date(payment.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{payment.description}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      ₹{Number(payment.amount).toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Badge
+                        variant={
+                          payment.status === "Successful"
+                            ? "default"
+                            : "destructive"
+                        }
+                        className="capitalize"
+                      >
+                        {payment.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

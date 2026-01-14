@@ -25,6 +25,7 @@ import { useStudent } from "@/context/student-context";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import { ScrollArea } from "./ui/scroll-area";
+import { usePathname } from "next/navigation";
 
 function NavContent() {
     const navItems = [
@@ -63,6 +64,9 @@ function NavContent() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { student, isLoading } = useStudent();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname === '/login') return <>{children}</>;
 
   if (isLoading || !student) {
     return (
@@ -149,12 +153,12 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <span className="text-lg font-semibold font-headline">IIITD ERP</span>
                     </Link>
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-green-500/50 bg-green-500/10 px-3 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+                <div className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${student.isActive ? 'border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400' : 'border-destructive/50 bg-destructive/10 text-destructive'}`}>
                     <div className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        {student.isActive && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>}
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${student.isActive ? 'bg-green-500' : 'bg-destructive'}`}></span>
                     </div>
-                    Student Status: Active
+                    Student Status: {student.isActive ? 'Active' : 'Inactive'}
                 </div>
             </header>
             <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

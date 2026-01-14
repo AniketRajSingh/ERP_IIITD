@@ -1,6 +1,6 @@
-// ERP_IIITD-main/src/lib/api.ts
+// Frontend/src/lib/api.ts
 
-const API_BASE_URL = 'http://localhost:9002/api/v1';
+const API_BASE_URL = 'https://overdecoratively-uninebriating-melda.ngrok-free.dev/api/v1';
 
 export function isLoggedIn() {
     if (typeof window === 'undefined') return false;
@@ -12,6 +12,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     
     const headers = {
         'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         ...options.headers,
     };
@@ -22,7 +23,6 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     });
 
     if (response.status === 401) {
-        // If we are on the client side, we might want to redirect to login
         if (typeof window !== 'undefined') {
             console.warn('Session expired or unauthorized. Please login.');
         }
