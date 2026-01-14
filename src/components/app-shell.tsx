@@ -13,6 +13,7 @@ import {
   Wallet,
   BookUser,
   Users,
+  User,
   PanelLeft,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -28,6 +29,7 @@ import { ScrollArea } from "./ui/scroll-area";
 function NavContent() {
     const navItems = [
         { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+        { href: "/profile", icon: User, label: "My Profile" },
         { href: "/requests/new", icon: Send, label: "Hostel Request" },
         { href: "/courses/registration", icon: BookPlus, label: "Register For Courses" },
         { href: "/academics/fees", icon: Wallet, label: "My Fee Details" },

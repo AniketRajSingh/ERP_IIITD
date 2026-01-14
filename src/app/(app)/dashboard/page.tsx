@@ -1,4 +1,6 @@
-import { Suspense } from 'react';
+"use client";
+
+import { Suspense, useEffect, useState } from 'react';
 import {
   getGrades,
   getStudentProfile,
@@ -20,49 +22,66 @@ import {
   ClassesTimeline,
   ClassesTimelineSkeleton,
 } from "@/components/dashboard/classes-timeline";
-
-async function Profile() {
-  const student = await getStudentProfile();
-  return <ProfileCard student={student} />;
-}
-
-async function Attendance() {
-  // This component fetches its own data client-side
-  return <AttendanceCard />;
-}
-
-async function AcademicHealth() {
-  const grades = await getGrades();
-  return <AcademicHealthChart grades={grades} />;
-}
-
-async function UpcomingClasses() {
-  const classes = await getUpcomingClasses();
-  return <ClassesTimeline classes={classes} />;
-}
+import { Student, Grade, Class } from "@/lib/types";
+import { isLoggedIn } from "@/lib/api";
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
+  const [student, setStudent] = useState<Student | null>(null);
+  const [grades, setGrades] = useState<Grade[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn()) {
+        router.push('/login');
+        return;
+    }
+    async function fetchData() {
+        try {
+            const [studentData, gradesData, classesData] = await Promise.all([
+                getStudentProfile(),
+                getGrades(),
+                getUpcomingClasses()
+            ]);
+            setStudent(studentData);
+            setGrades(gradesData);
+            setClasses(classesData);
+        } catch (error) {
+            console.error("Failed to fetch dashboard data:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2"><AcademicHealthChartSkeleton /></div>
+            <div className="space-y-6">
+                <ProfileCardSkeleton />
+                <AttendanceCardSkeleton />
+            </div>
+        </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <Suspense fallback={<AcademicHealthChartSkeleton />}>
-          <AcademicHealth />
-        </Suspense>
+        <AcademicHealthChart grades={grades} />
       </div>
 
       <div className="space-y-6">
-        <Suspense fallback={<ProfileCardSkeleton />}>
-          <Profile />
-        </Suspense>
-        <Suspense fallback={<AttendanceCardSkeleton />}>
-          <Attendance />
-        </Suspense>
+        <ProfileCard student={student!} />
+        <AttendanceCard />
       </div>
 
       <div className="lg:col-span-3">
-        <Suspense fallback={<ClassesTimelineSkeleton />}>
-          <UpcomingClasses />
-        </Suspense>
+        <ClassesTimeline classes={classes} />
       </div>
     </div>
   );

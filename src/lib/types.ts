@@ -2,11 +2,13 @@ export type Student = {
   id: string;
   name: string;
   email: string;
+  role: 'student' | 'faculty' | 'admin';
   rollNumber: string;
   program: string;
   cgpa: number;
   creditsCompleted: number;
   avatarUrl: string;
+  isActive: boolean;
 };
 
 export type Course = {

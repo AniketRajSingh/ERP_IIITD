@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getAvailableCourses } from "@/lib/mock-data";
+import { getAvailableCourses, enrollInCourse, finalizeRegistration } from "@/lib/mock-data";
 import type { Course } from "@/lib/types";
-import { AlertCircle, CalendarClock, PlusCircle, Trash2 } from "lucide-react";
+import { AlertCircle, CalendarClock, CheckCircle2, PlusCircle, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 
@@ -38,6 +38,7 @@ export default function CourseRegistrationPage() {
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [registeredCourses, setRegisteredCourses] = useState<Course[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -54,7 +55,7 @@ export default function CourseRegistrationPage() {
     return registeredCourses.reduce((total, course) => total + course.credits, 0);
   }, [registeredCourses]);
 
-  const handleRegisterCourse = (course: Course) => {
+  const handleRegisterCourse = async (course: Course) => {
     if (registeredCourses.some(c => c.id === course.id)) {
       toast({ title: "Course already registered", variant: "destructive" });
       return;
@@ -65,21 +66,27 @@ export default function CourseRegistrationPage() {
       return;
     }
 
-    const hasConflict = registeredCourses.some(rc => 
-      rc.schedule.day === course.schedule.day &&
-      (
-        (course.schedule.startTime >= rc.schedule.startTime && course.schedule.startTime < rc.schedule.endTime) ||
-        (rc.schedule.startTime >= course.schedule.startTime && rc.schedule.startTime < course.schedule.endTime)
-      )
-    );
-
-    if (hasConflict) {
-      toast({ title: "Schedule Conflict", description: `This course conflicts with another registered course.`, variant: "destructive" });
-      return;
+    // API CALL: Enroll in course
+    try {
+        await enrollInCourse(course.id);
+        setRegisteredCourses([...registeredCourses, course]);
+        toast({ title: "Course Added", description: `${course.name} added to pending list.` });
+    } catch (e: any) {
+        toast({ title: "Registration Error", description: e.message, variant: "destructive" });
     }
+  };
 
-    setRegisteredCourses([...registeredCourses, course]);
-    toast({ title: "Course Registered", description: `${course.name} has been added to your schedule.` });
+  const handleFinalize = async () => {
+    setIsFinalizing(true);
+    try {
+        await finalizeRegistration();
+        toast({ title: "Registration Finalized", description: "Your schedule is now active." });
+        setRegisteredCourses([]); // Clear the list as they are now 'Approved' and moved to Course List
+    } catch (e: any) {
+        toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+        setIsFinalizing(false);
+    }
   };
 
   const handleDeregisterCourse = (courseId: string) => {
@@ -189,8 +196,12 @@ export default function CourseRegistrationPage() {
               </div>
             )}
             
-            <Button className="w-full mt-6" disabled={registeredCourses.length === 0}>
-                Finalize Registration
+            <Button 
+                className="w-full mt-6" 
+                disabled={registeredCourses.length === 0 || isFinalizing}
+                onClick={handleFinalize}
+            >
+                {isFinalizing ? "Finalizing..." : "Finalize Registration"}
             </Button>
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { GraduationCap, Star, BookOpen } from "lucide-react";
+import { GraduationCap, Star, BookOpen, Circle, Shield } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Student } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
 interface ProfileCardProps {
   student: Student;
@@ -35,12 +36,16 @@ const StatItem = ({
 
 export function ProfileCard({ student }: ProfileCardProps) {
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
+        <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold uppercase tracking-widest ${student.isActive ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'}`}>
+            {student.isActive ? 'Student Status: Active' : 'Student Status: Inactive'}
+        </div>
       <CardHeader>
-        <CardTitle>Welcome, {student.name.split(" ")[0]}!</CardTitle>
+        <CardTitle className="mt-2">Welcome, {student.name.split(" ")[0]}!</CardTitle>
         <CardDescription>{student.program}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <StatItem icon={Shield} label="Role" value={student.role.toUpperCase()} />
         <StatItem icon={Star} label="CGPA" value={student.cgpa.toFixed(2)} />
         <StatItem
           icon={BookOpen}
